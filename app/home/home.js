@@ -1,12 +1,13 @@
 (function(angular) {
   "use strict";
 
-  var app = angular.module('myApp.home', ['firebase.auth', 'firebase', 'firebase.utils', 'ngRoute']);
+  var app = angular.module('myApp.home', ['firebase.appauth', 'firebase', 'ngRoute']);
 
-  app.controller('HomeCtrl', ['$scope', 'fbutil', 'user', '$firebaseObject', 'FBURL', function ($scope, fbutil, user, $firebaseObject, FBURL) {
-    $scope.syncedValue = $firebaseObject(fbutil.ref('syncedValue'));
-    $scope.user = user;
-    $scope.FBURL = FBURL;
+  app.controller('HomeCtrl', ['$scope', '$firebaseObject', 'Auth', function ($scope, $firebaseObject, Auth) {
+    var ref = firebase.database().ref('syncedValue');
+    $scope.syncedValue = $firebaseObject(ref);
+    $scope.user = Auth.$getAuth();;
+    $scope.FBURL = PRIVATE.firebase_databaseURL;
   }]);
 
   app.config(['$routeProvider', function ($routeProvider) {
@@ -19,11 +20,10 @@
         // in the controller, but this makes things cleaner (controller doesn't need to worry
         // about auth status or timing of accessing data or displaying elements)
         user: ['Auth', function (Auth) {
-          return Auth.$waitForAuth();
+          return Auth.$waitForSignIn();
         }]
       }
     });
   }]);
 
 })(angular);
-
