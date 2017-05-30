@@ -1,5 +1,5 @@
 "use strict";
-angular.module('myApp.login', ['firebase.utils', 'firebase.auth', 'ngRoute'])
+angular.module('myApp.login', ['firebase.appauth', 'ngRoute'])
 
   .config(['$routeProvider', function($routeProvider) {
     $routeProvider.when('/login', {
@@ -8,7 +8,7 @@ angular.module('myApp.login', ['firebase.utils', 'firebase.auth', 'ngRoute'])
     });
   }])
 
-  .controller('LoginCtrl', ['$scope', 'Auth', '$location', 'fbutil', function($scope, Auth, $location, fbutil) {
+  .controller('LoginCtrl', ['$scope', 'Auth', '$location', function($scope, Auth, $location) {
     $scope.email = null;
     $scope.pass = null;
     $scope.confirm = null;
@@ -16,8 +16,8 @@ angular.module('myApp.login', ['firebase.utils', 'firebase.auth', 'ngRoute'])
 
     $scope.login = function(email, pass) {
       $scope.err = null;
-      Auth.$authWithPassword({ email: email, password: pass }, {rememberMe: true})
-        .then(function(/* user */) {
+      Auth.$signInWithEmailAndPassword(email, pass)
+        .then(function() {
           $location.path('/account');
         }, function(err) {
           $scope.err = errMessage(err);
@@ -30,19 +30,12 @@ angular.module('myApp.login', ['firebase.utils', 'firebase.auth', 'ngRoute'])
         var email = $scope.email;
         var pass = $scope.pass;
         // create user credentials in Firebase auth system
-        Auth.$createUser({email: email, password: pass})
+        Auth.$createUserWithEmailAndPassword(email, pass)
           .then(function() {
             // authenticate so we have permission to write to Firebase
-            return Auth.$authWithPassword({ email: email, password: pass });
+            return Auth.$signInWithEmailAndPassword(email, pass);
           })
-          .then(function(user) {
-            // create a user profile in our data store
-            var ref = fbutil.ref('users', user.uid);
-            return fbutil.handler(function(cb) {
-              ref.set({email: email, name: name||firstPartOfEmail(email)}, cb);
-            });
-          })
-          .then(function(/* user */) {
+          .then(function() {
             // redirect to the account page
             $location.path('/account');
           }, function(err) {
@@ -66,16 +59,5 @@ angular.module('myApp.login', ['firebase.utils', 'firebase.auth', 'ngRoute'])
 
     function errMessage(err) {
       return angular.isObject(err) && err.code? err.code : err + '';
-    }
-
-    function firstPartOfEmail(email) {
-      return ucfirst(email.substr(0, email.indexOf('@'))||'');
-    }
-
-    function ucfirst (str) {
-      // inspired by: http://kevin.vanzonneveld.net
-      str += '';
-      var f = str.charAt(0).toUpperCase();
-      return f + str.substr(1);
     }
   }]);
