@@ -5,7 +5,7 @@
   // to be used by authRequired() in the services below
   var securedRoutes = [];
 
-  angular.module('myApp.security', ['ngRoute', 'firebase.auth', 'myApp.config'])
+  angular.module('myApp.security', ['ngRoute', 'myApp.config'])
 
     .config(['$routeProvider', function ($routeProvider) {
       // routes which are not in our map are redirected to /home
@@ -30,7 +30,7 @@
         securedRoutes.push(path); // store all secured routes for use with authRequired() below
         route.resolve = route.resolve || {};
         route.resolve.user = ['Auth', function (Auth) {
-          return Auth.$requireAuth();
+          return Auth.$requireSignIn();
         }];
         $routeProvider.when(path, route);
         return this;
@@ -46,7 +46,7 @@
     .run(['$rootScope', '$location', 'Auth', 'loginRedirectPath',
       function ($rootScope, $location, Auth, loginRedirectPath) {
         // watch for login status changes and redirect if appropriate
-        Auth.$onAuth(check);
+        Auth.$onAuthStateChanged(check);
 
         // some of our routes may reject resolve promises with the special {authRequired: true} error
         // this redirects to the login page whenever that is encountered
