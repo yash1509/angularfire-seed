@@ -1,33 +1,30 @@
 (function (angular) {
   "use strict";
 
-  var app = angular.module('myApp.account', ['firebase', 'firebase.utils', 'firebase.auth', 'ngRoute']);
+  var app = angular.module('myApp.account', ['firebase', 'firebase.appauth', 'ngRoute']);
 
-  app.controller('AccountCtrl', ['$scope', 'Auth', 'fbutil', 'user', '$location', '$firebaseObject',
-    function($scope, Auth, fbutil, user, $location, $firebaseObject) {
-      var unbind;
+  app.controller('AccountCtrl', ['$scope', 'Auth', '$location', '$firebaseObject',
+    function($scope, Auth, $location, $firebaseObject) {
       // create a 3-way binding with the user profile object in Firebase
-      var profile = $firebaseObject(fbutil.ref('users', user.uid));
-      profile.$bindTo($scope, 'profile').then(function(ub) { unbind = ub; });
+      $scope.profile = Auth.$getAuth();
+      console.log("firebase.User = ",JSON.stringify($scope.profile));
 
       // expose logout function to scope
       $scope.logout = function() {
-        if( unbind ) { unbind(); }
-        profile.$destroy();
-        Auth.$unauth();
+        Auth.$signOut();
         $location.path('/login');
       };
 
-      $scope.changePassword = function(pass, confirm, newPass) {
+      $scope.changePassword = function(newPass, confirm) {
         resetMessages();
-        if( !pass || !confirm || !newPass ) {
+        if( !confirm || !newPass ) {
           $scope.err = 'Please fill in all password fields';
         }
         else if( newPass !== confirm ) {
           $scope.err = 'New pass and confirm do not match';
         }
         else {
-          Auth.$changePassword({email: profile.email, oldPassword: pass, newPassword: newPass})
+          Auth.$updatePassword(newPass)
             .then(function() {
               $scope.msg = 'Password changed';
             }, function(err) {
@@ -38,16 +35,9 @@
 
       $scope.clear = resetMessages;
 
-      $scope.changeEmail = function(pass, newEmail) {
+      $scope.changeEmail = function(newEmail) {
         resetMessages();
-        var oldEmail = profile.email;
-        Auth.$changeEmail({oldEmail: oldEmail, newEmail: newEmail, password: pass})
-          .then(function() {
-            // store the new email address in the user's profile
-            return fbutil.handler(function(done) {
-              fbutil.ref('users', user.uid, 'email').set(newEmail, done);
-            });
-          })
+        Auth.$updateEmail(newEmail)
           .then(function() {
             $scope.emailmsg = 'Email changed';
           }, function(err) {
