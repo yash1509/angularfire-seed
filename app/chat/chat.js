@@ -1,7 +1,7 @@
 (function (angular) {
   "use strict";
 
-  var app = angular.module('myApp.chat', ['ngRoute', 'firebase.utils', 'firebase']);
+  var app = angular.module('myApp.chat', ['ngRoute', 'firebase']);
 
   app.controller('ChatCtrl', ['$scope', 'messageList', function($scope, messageList) {
       $scope.messages = messageList;
@@ -12,8 +12,8 @@
       };
     }]);
 
-  app.factory('messageList', ['fbutil', '$firebaseArray', function(fbutil, $firebaseArray) {
-    var ref = fbutil.ref('messages').limitToLast(10);
+  app.factory('messageList', ['$firebaseArray', function($firebaseArray) {
+    var ref = firebase.database().ref('messages').limitToLast(10);;
     return $firebaseArray(ref);
   }]);
 
