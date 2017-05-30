@@ -16,7 +16,7 @@ angular.module('myApp')
         // make a copy of the old directive
         var _compile = directive.compile;
         directive.compile = function(element, attr) {
-          Auth.$waitForAuth().then(function() {
+          Auth.$waitForSignIn().then(function() {
             // after auth, run the original ng-cloak directive
             _compile.call(directive, element, attr);
           });
